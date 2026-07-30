@@ -31,18 +31,23 @@ export function FloatingChatWidget({
 }: FloatingChatWidgetProps) {
   return (
     <div className="fixed right-4 bottom-4 z-50 flex flex-col items-end gap-3 sm:right-6 sm:bottom-6">
-      {open && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 w-[min(22rem,calc(100vw-2rem))] duration-150">
-          <ChatWidget
-            deliveryId={deliveryId}
-            senderType={senderType}
-            initialMessages={initialMessages}
-            guestToken={guestToken}
-            onSendMessage={onSendMessage}
-            className="h-112 shadow-lg"
-          />
-        </div>
-      )}
+      {/* Stays mounted while closed so the realtime subscription and message
+          history survive toggling, instead of resetting to a stale snapshot
+          every time the widget is reopened. */}
+      <div
+        className={`w-[min(22rem,calc(100vw-2rem))] duration-150 ${
+          open ? "animate-in fade-in slide-in-from-bottom-4 flex" : "hidden"
+        }`}
+      >
+        <ChatWidget
+          deliveryId={deliveryId}
+          senderType={senderType}
+          initialMessages={initialMessages}
+          guestToken={guestToken}
+          onSendMessage={onSendMessage}
+          className="h-[calc(100vh-8rem)] w-full shadow-lg"
+        />
+      </div>
 
       <Button
         type="button"

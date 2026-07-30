@@ -7,6 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { PlaceSearchInput, type PlaceValue } from "@/components/admin/PlaceSearchInput";
+
+const EMPTY_PLACE: PlaceValue = { name: "", lat: null, lng: null };
 
 export function DeliveryForm() {
   const router = useRouter();
@@ -15,10 +18,10 @@ export function DeliveryForm() {
     recipientEmail: "",
     recipientPhone: "",
     itemDescription: "",
-    origin: "",
-    destination: "",
     adminNote: "",
   });
+  const [origin, setOrigin] = useState<PlaceValue>(EMPTY_PLACE);
+  const [destination, setDestination] = useState<PlaceValue>(EMPTY_PLACE);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -34,7 +37,15 @@ export function DeliveryForm() {
     const res = await fetch("/api/admin/deliveries", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({
+        ...form,
+        origin: origin.name || undefined,
+        originLat: origin.lat ?? undefined,
+        originLng: origin.lng ?? undefined,
+        destination: destination.name || undefined,
+        destinationLat: destination.lat ?? undefined,
+        destinationLng: destination.lng ?? undefined,
+      }),
     });
 
     const body = await res.json();
@@ -91,15 +102,18 @@ export function DeliveryForm() {
                   placeholder="e.g. 3x ceramic mugs"
                 />
               </Field>
-              <Field label="Origin">
-                <Input value={form.origin} onChange={(e) => update("origin", e.target.value)} />
-              </Field>
-              <Field label="Destination">
-                <Input
-                  value={form.destination}
-                  onChange={(e) => update("destination", e.target.value)}
-                />
-              </Field>
+              <PlaceSearchInput
+                label="Origin"
+                value={origin}
+                onChange={setOrigin}
+                placeholder="Search for a pickup location"
+              />
+              <PlaceSearchInput
+                label="Destination"
+                value={destination}
+                onChange={setDestination}
+                placeholder="Search for a delivery location"
+              />
             </div>
           </div>
 

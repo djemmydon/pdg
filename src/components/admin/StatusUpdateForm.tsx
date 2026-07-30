@@ -15,6 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PlaceSearchInput, type PlaceValue } from "@/components/admin/PlaceSearchInput";
+
+const EMPTY_PLACE: PlaceValue = { name: "", lat: null, lng: null };
 
 export function StatusUpdateForm({
   deliveryId,
@@ -27,6 +30,7 @@ export function StatusUpdateForm({
   const [status, setStatus] = useState<DeliveryStatus>(currentStatus);
   const [note, setNote] = useState("");
   const [holdReason, setHoldReason] = useState("");
+  const [location, setLocation] = useState<PlaceValue>(EMPTY_PLACE);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -38,7 +42,14 @@ export function StatusUpdateForm({
     const res = await fetch(`/api/admin/deliveries/${deliveryId}/status`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, note, holdReason }),
+      body: JSON.stringify({
+        status,
+        note,
+        holdReason,
+        locationName: location.name || undefined,
+        locationLat: location.lat ?? undefined,
+        locationLng: location.lng ?? undefined,
+      }),
     });
 
     if (!res.ok) {
@@ -50,6 +61,7 @@ export function StatusUpdateForm({
 
     setNote("");
     setHoldReason("");
+    setLocation(EMPTY_PLACE);
     setSubmitting(false);
     router.refresh();
   }
@@ -76,6 +88,13 @@ export function StatusUpdateForm({
               </SelectContent>
             </Select>
           </div>
+
+          <PlaceSearchInput
+            label="Current location (optional)"
+            value={location}
+            onChange={setLocation}
+            placeholder="Search for the package's current location"
+          />
 
           <div>
             <Label className="mb-1.5">Note (optional)</Label>

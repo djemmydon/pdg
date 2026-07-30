@@ -51,6 +51,10 @@ interface CreateDeliveryInput {
   itemDescription: string;
   origin?: string | null;
   destination?: string | null;
+  originLat?: number | null;
+  originLng?: number | null;
+  destinationLat?: number | null;
+  destinationLng?: number | null;
   adminNote?: string | null;
   createdBy: string;
 }
@@ -73,6 +77,10 @@ export async function createDelivery(input: CreateDeliveryInput): Promise<Delive
         item_description: input.itemDescription,
         origin: input.origin ?? null,
         destination: input.destination ?? null,
+        origin_lat: input.originLat ?? null,
+        origin_lng: input.originLng ?? null,
+        destination_lat: input.destinationLat ?? null,
+        destination_lng: input.destinationLng ?? null,
         admin_note: input.adminNote ?? null,
         current_status: "order_confirmed",
         created_by: input.createdBy,
@@ -104,16 +112,32 @@ interface UpdateStatusInput {
   status: DeliveryStatus;
   note?: string | null;
   holdReason?: string | null;
+  locationName?: string | null;
+  locationLat?: number | null;
+  locationLng?: number | null;
   updatedBy: string;
 }
 
 export async function updateDeliveryStatus(input: UpdateStatusInput): Promise<Delivery> {
   const supabase = createServiceRoleClient();
   const holdReason = input.status === "on_hold" ? input.holdReason ?? null : null;
+  const hasLocation = input.locationLat != null && input.locationLng != null;
 
   const { data, error } = await supabase
     .from("deliveries")
-    .update({ current_status: input.status, hold_reason: holdReason })
+    .update({
+      current_status: input.status,
+      hold_reason: holdReason,
+      // Only overwrite the last-known location when a new one is provided;
+      // a status update without one leaves the previous location in place.
+      ...(hasLocation
+        ? {
+            current_location_name: input.locationName ?? null,
+            current_lat: input.locationLat,
+            current_lng: input.locationLng,
+          }
+        : {}),
+    })
     .eq("id", input.deliveryId)
     .select("*")
     .single();
@@ -127,6 +151,9 @@ export async function updateDeliveryStatus(input: UpdateStatusInput): Promise<De
     status: input.status,
     note: input.note ?? null,
     hold_reason: holdReason,
+    location_name: hasLocation ? input.locationName ?? null : null,
+    location_lat: hasLocation ? input.locationLat : null,
+    location_lng: hasLocation ? input.locationLng : null,
     created_by: input.updatedBy,
   });
 

@@ -18,6 +18,9 @@ const schema = z.object({
   ]),
   note: z.string().max(1000).optional(),
   holdReason: z.string().max(1000).optional(),
+  locationName: z.string().max(200).optional(),
+  locationLat: z.number().min(-90).max(90).optional(),
+  locationLng: z.number().min(-180).max(180).optional(),
 });
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -41,6 +44,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     status: parsed.data.status,
     note: parsed.data.note || null,
     holdReason: parsed.data.holdReason || null,
+    locationName: parsed.data.locationName || null,
+    locationLat: parsed.data.locationLat ?? null,
+    locationLng: parsed.data.locationLng ?? null,
     updatedBy: adminId,
   });
 

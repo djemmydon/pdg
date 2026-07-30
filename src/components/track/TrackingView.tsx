@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { HoldBanner } from "@/components/HoldBanner";
 import { FloatingChatWidget } from "@/components/FloatingChatWidget";
+import { DeliveryMap } from "@/components/DeliveryMap";
 import { Separator } from "@/components/ui/separator";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import type { ChatMessage, Delivery, StatusHistoryEntry } from "@/lib/types";
@@ -120,6 +121,14 @@ export function TrackingView({
               </p>
               <p className="mt-1 text-sm text-foreground">{delivery.item_description}</p>
             </div>
+            {delivery.current_location_name && (
+              <div>
+                <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                  Current location
+                </p>
+                <p className="mt-1 text-sm text-foreground">{delivery.current_location_name}</p>
+              </div>
+            )}
           </div>
 
           <div>
@@ -139,6 +148,31 @@ export function TrackingView({
             <StatusTimeline history={history} />
           </div>
         </div>
+
+        {(delivery.origin_lat != null ||
+          delivery.destination_lat != null ||
+          delivery.current_lat != null) && (
+          <div className="mt-6 rounded-lg border border-border bg-background p-6 sm:p-8">
+            <p className="mb-4 text-sm font-semibold text-foreground">Route</p>
+            <DeliveryMap
+              origin={{
+                name: delivery.origin,
+                lat: delivery.origin_lat,
+                lng: delivery.origin_lng,
+              }}
+              destination={{
+                name: delivery.destination,
+                lat: delivery.destination_lat,
+                lng: delivery.destination_lng,
+              }}
+              current={{
+                name: delivery.current_location_name,
+                lat: delivery.current_lat,
+                lng: delivery.current_lng,
+              }}
+            />
+          </div>
+        )}
       </main>
 
       <FloatingChatWidget

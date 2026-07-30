@@ -23,6 +23,13 @@ export interface Database {
           item_description: string;
           origin: string | null;
           destination: string | null;
+          origin_lat: number | null;
+          origin_lng: number | null;
+          destination_lat: number | null;
+          destination_lng: number | null;
+          current_location_name: string | null;
+          current_lat: number | null;
+          current_lng: number | null;
           current_status: DeliveryStatus;
           hold_reason: string | null;
           admin_note: string | null;
@@ -39,6 +46,13 @@ export interface Database {
           item_description: string;
           origin?: string | null;
           destination?: string | null;
+          origin_lat?: number | null;
+          origin_lng?: number | null;
+          destination_lat?: number | null;
+          destination_lng?: number | null;
+          current_location_name?: string | null;
+          current_lat?: number | null;
+          current_lng?: number | null;
           current_status?: DeliveryStatus;
           hold_reason?: string | null;
           admin_note?: string | null;
@@ -56,6 +70,9 @@ export interface Database {
           status: DeliveryStatus;
           note: string | null;
           hold_reason: string | null;
+          location_name: string | null;
+          location_lat: number | null;
+          location_lng: number | null;
           created_by: string | null;
           created_at: string;
         };
@@ -65,6 +82,9 @@ export interface Database {
           status: DeliveryStatus;
           note?: string | null;
           hold_reason?: string | null;
+          location_name?: string | null;
+          location_lat?: number | null;
+          location_lng?: number | null;
           created_by?: string | null;
           created_at?: string;
         };

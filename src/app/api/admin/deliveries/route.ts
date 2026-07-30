@@ -12,6 +12,10 @@ const schema = z.object({
   itemDescription: z.string().min(1).max(500),
   origin: z.string().max(200).optional(),
   destination: z.string().max(200).optional(),
+  originLat: z.number().min(-90).max(90).optional(),
+  originLng: z.number().min(-180).max(180).optional(),
+  destinationLat: z.number().min(-90).max(90).optional(),
+  destinationLng: z.number().min(-180).max(180).optional(),
   adminNote: z.string().max(2000).optional(),
 });
 
@@ -33,6 +37,10 @@ export async function POST(request: Request) {
     itemDescription: parsed.data.itemDescription,
     origin: parsed.data.origin || null,
     destination: parsed.data.destination || null,
+    originLat: parsed.data.originLat ?? null,
+    originLng: parsed.data.originLng ?? null,
+    destinationLat: parsed.data.destinationLat ?? null,
+    destinationLng: parsed.data.destinationLng ?? null,
     adminNote: parsed.data.adminNote || null,
     createdBy: adminId,
   });

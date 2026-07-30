@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { StatusUpdateForm } from "@/components/admin/StatusUpdateForm";
 import { AdminChatSection } from "@/components/admin/AdminChatSection";
+import { DeliveryMap } from "@/components/DeliveryMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -64,12 +65,41 @@ export default async function DeliveryDetailPage({
                   <Detail label="Item" value={delivery.item_description} />
                   <Detail label="Origin" value={delivery.origin ?? "Not provided"} />
                   <Detail label="Destination" value={delivery.destination ?? "Not provided"} />
+                  <Detail
+                    label="Current location"
+                    value={delivery.current_location_name ?? "Not set"}
+                  />
                   {delivery.admin_note && (
                     <Detail label="Internal note" value={delivery.admin_note} />
                   )}
                 </dl>
               </CardContent>
             </Card>
+
+            {(delivery.origin_lat != null ||
+              delivery.destination_lat != null ||
+              delivery.current_lat != null) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Route</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <DeliveryMap
+                    origin={{ name: delivery.origin, lat: delivery.origin_lat, lng: delivery.origin_lng }}
+                    destination={{
+                      name: delivery.destination,
+                      lat: delivery.destination_lat,
+                      lng: delivery.destination_lng,
+                    }}
+                    current={{
+                      name: delivery.current_location_name,
+                      lat: delivery.current_lat,
+                      lng: delivery.current_lng,
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>

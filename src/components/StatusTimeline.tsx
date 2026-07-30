@@ -1,3 +1,4 @@
+import { MapPin } from "lucide-react";
 import { STATUS_META } from "@/lib/statuses";
 import type { StatusHistoryEntry } from "@/lib/types";
 
@@ -40,6 +41,12 @@ export function StatusTimeline({ history }: { history: StatusHistoryEntry[] }) {
               {entry.note && <p className="mt-0.5 text-sm text-muted-foreground">{entry.note}</p>}
               {entry.hold_reason && (
                 <p className="mt-0.5 text-sm text-destructive">{entry.hold_reason}</p>
+              )}
+              {entry.location_name && (
+                <p className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {entry.location_name}
+                </p>
               )}
               <p className="mt-1 text-xs text-muted-foreground">{formatTimestamp(entry.created_at)}</p>
             </div>

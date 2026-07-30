@@ -66,9 +66,22 @@ export function ChatWidget({
     };
   }, [deliveryId, supabaseClient, guestToken]);
 
+  // Messages can arrive out of chronological order: an optimistic send is
+  // appended locally before the server confirms it, and a concurrent
+  // message from the other party can have its realtime event land first.
+  // Sorting by timestamp on every render keeps the list stable regardless
+  // of arrival order.
+  const sortedMessages = useMemo(
+    () =>
+      [...messages].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ),
+    [messages]
+  );
+
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [sortedMessages]);
 
   async function handleSend() {
     const text = draft.trim();
@@ -105,12 +118,12 @@ export function ChatWidget({
       </div>
 
       <div ref={scrollRef} className="min-h-60 flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4">
-        {messages.length === 0 && (
+        {sortedMessages.length === 0 && (
           <p className="mt-8 text-center text-sm text-muted-foreground">
             No messages yet. Say hello.
           </p>
         )}
-        {messages.map((msg) => {
+        {sortedMessages.map((msg) => {
           const isOwn = msg.sender_type === senderType;
           return (
             <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
