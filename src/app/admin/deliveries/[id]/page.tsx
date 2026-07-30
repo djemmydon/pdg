@@ -43,10 +43,10 @@ export default async function DeliveryDetailPage({
     <div className="min-h-screen bg-muted/30">
       <AdminNav />
       <main className="mx-auto max-w-5xl px-4 py-8">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <p className="font-mono text-sm text-muted-foreground">{delivery.tracking_code}</p>
-            <h1 className="font-display text-2xl font-extrabold text-foreground">
+            <h1 className="font-display truncate text-2xl font-extrabold text-foreground">
               {delivery.recipient_name}
             </h1>
           </div>
@@ -63,7 +63,7 @@ export default async function DeliveryDetailPage({
                 <CardTitle>Delivery details</CardTitle>
               </CardHeader>
               <CardContent>
-                <dl className="grid grid-cols-2 gap-4 text-sm">
+                <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                   <Detail label="Recipient email" value={delivery.recipient_email} />
                   <Detail label="Recipient phone" value={delivery.recipient_phone ?? "Not provided"} />
                   <Detail label="Item" value={delivery.item_description} />
@@ -128,9 +128,9 @@ export default async function DeliveryDetailPage({
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="min-w-0">
       <dt className="text-xs font-semibold text-muted-foreground uppercase">{label}</dt>
-      <dd className="mt-0.5 text-foreground">{value}</dd>
+      <dd className="mt-0.5 text-foreground break-words">{value}</dd>
     </div>
   );
 }

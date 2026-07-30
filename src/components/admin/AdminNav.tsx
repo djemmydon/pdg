@@ -20,18 +20,18 @@ export function AdminNav() {
 
   return (
     <nav className="sticky top-0 z-10 border-b border-border bg-background">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/admin">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-3">
+        <Link href="/admin" className="shrink-0">
           <Logo size="sm" />
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link href="/admin/deliveries/new" className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}>
             <Plus className="h-4 w-4" />
-            New delivery
+            <span className="hidden sm:inline">New delivery</span>
           </Link>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={handleSignOut}>
             <LogOut className="h-4 w-4" />
-            Sign out
+            <span className="hidden sm:inline">Sign out</span>
           </Button>
         </div>
       </div>

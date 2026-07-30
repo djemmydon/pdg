@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
+import { Info, X } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -25,12 +26,25 @@ const MARKER_COLOR = {
   destination: "#0f172a",
 } as const;
 
+const LEGEND_LABEL = {
+  origin: "Origin",
+  current: "Current location",
+  destination: "Destination",
+} as const;
+
 export function DeliveryMap({ origin, destination, current, className = "" }: DeliveryMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const hasOrigin = origin.lat != null && origin.lng != null;
   const hasDestination = destination.lat != null && destination.lng != null;
   const hasCurrent = current != null && current.lat != null && current.lng != null;
+
+  const legendPoints: { key: keyof typeof MARKER_COLOR; name: string | null }[] = [
+    ...(hasOrigin ? [{ key: "origin" as const, name: origin.name }] : []),
+    ...(hasCurrent ? [{ key: "current" as const, name: current?.name ?? null }] : []),
+    ...(hasDestination ? [{ key: "destination" as const, name: destination.name }] : []),
+  ];
 
   useEffect(() => {
     if (!MAPBOX_TOKEN || !containerRef.current || (!hasOrigin && !hasDestination && !hasCurrent)) {
@@ -67,7 +81,9 @@ export function DeliveryMap({ origin, destination, current, className = "" }: De
     for (const point of points) {
       new mapboxgl.Marker({ color: MARKER_COLOR[point.key] })
         .setLngLat(point.coord)
-        .setPopup(new mapboxgl.Popup({ offset: 16 }).setText(point.label ?? point.key))
+        .setPopup(
+          new mapboxgl.Popup({ offset: 16 }).setText(point.label ?? LEGEND_LABEL[point.key])
+        )
         .addTo(map);
     }
 
@@ -130,9 +146,43 @@ export function DeliveryMap({ origin, destination, current, className = "" }: De
   }
 
   return (
-    <div
-      ref={containerRef}
-      className={`h-72 w-full overflow-hidden rounded-lg border border-border ${className}`}
-    />
+    <div className={`relative h-72 w-full overflow-hidden rounded-lg border border-border ${className}`}>
+      <div ref={containerRef} className="h-full w-full" />
+
+      <button
+        type="button"
+        onClick={() => setLegendOpen((v) => !v)}
+        aria-label={legendOpen ? "Hide location details" : "Show location details"}
+        className="absolute top-2 left-2 z-10 flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-foreground shadow-sm hover:bg-muted"
+      >
+        {legendOpen ? <X className="h-4 w-4" /> : <Info className="h-4 w-4" />}
+      </button>
+
+      {legendOpen && (
+        <div className="absolute top-12 left-2 z-10 w-56 rounded-md border border-border bg-background p-3 shadow-md">
+          <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            Locations
+          </p>
+          <ul className="space-y-2">
+            {legendPoints.map((point) => (
+              <li key={point.key} className="flex items-start gap-2 text-sm">
+                <span
+                  className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: MARKER_COLOR[point.key] }}
+                />
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-muted-foreground">
+                    {LEGEND_LABEL[point.key]}
+                  </span>
+                  <span className="block break-words text-foreground">
+                    {point.name ?? "Not set"}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
