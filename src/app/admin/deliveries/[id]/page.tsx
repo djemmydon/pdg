@@ -4,6 +4,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { StatusTimeline } from "@/components/StatusTimeline";
 import { StatusUpdateForm } from "@/components/admin/StatusUpdateForm";
 import { AdminChatSection } from "@/components/admin/AdminChatSection";
+import { DeleteDeliveryButton } from "@/components/admin/DeleteDeliveryButton";
 import { DeliveryMap } from "@/components/DeliveryMap";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -49,7 +50,10 @@ export default async function DeliveryDetailPage({
               {delivery.recipient_name}
             </h1>
           </div>
-          <StatusBadge status={delivery.current_status} />
+          <div className="flex items-center gap-3">
+            <StatusBadge status={delivery.current_status} />
+            <DeleteDeliveryButton deliveryId={delivery.id} trackingCode={delivery.tracking_code} />
+          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">

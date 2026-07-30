@@ -45,7 +45,11 @@ export function DeliveryMap({ origin, destination, current, className = "" }: De
       [];
     if (hasOrigin) points.push({ key: "origin", coord: [origin.lng!, origin.lat!], label: origin.name });
     if (hasCurrent) {
-      points.push({ key: "current", coord: [current!.lng!, current!.lat!], label: current!.name });
+      points.push({
+        key: "current",
+        coord: [current?.lng as number, current?.lat as number],
+        label: current?.name ?? null,
+      });
     }
     if (hasDestination) {
       points.push({ key: "destination", coord: [destination.lng!, destination.lat!], label: destination.name });

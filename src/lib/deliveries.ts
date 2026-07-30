@@ -22,6 +22,16 @@ export async function getDeliveryById(id: string): Promise<Delivery | null> {
   return data;
 }
 
+// Status history and chat messages cascade-delete via their foreign keys
+// (see migration 0001_init.sql).
+export async function deleteDelivery(id: string): Promise<void> {
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase.from("deliveries").delete().eq("id", id);
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function getStatusHistory(deliveryId: string) {
   const supabase = createServiceRoleClient();
   const { data } = await supabase
