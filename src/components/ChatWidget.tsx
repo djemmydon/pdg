@@ -18,6 +18,10 @@ interface ChatWidgetProps {
   guestToken?: string;
   onSendMessage: (message: string) => Promise<ChatMessage>;
   onClose?: () => void;
+  // Fired for every realtime message from the other party, regardless of
+  // whether the widget is visually open, so a container can surface a
+  // notification even while its own panel is hidden.
+  onIncomingMessage?: (message: ChatMessage) => void;
   className?: string;
 }
 
@@ -32,6 +36,7 @@ export function ChatWidget({
   guestToken,
   onSendMessage,
   onClose,
+  onIncomingMessage,
   className = "",
 }: ChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -44,6 +49,12 @@ export function ChatWidget({
   // realtime handler recognize "this INSERT is the echo of what I just sent"
   // instead of appending it as a second, duplicate message.
   const pendingOwnMessageRef = useRef<{ tempId: string; text: string } | null>(null);
+  // Kept in a ref so the subscription effect below doesn't need to
+  // resubscribe every time the caller passes a new inline function.
+  const onIncomingMessageRef = useRef(onIncomingMessage);
+  useEffect(() => {
+    onIncomingMessageRef.current = onIncomingMessage;
+  });
 
   useEffect(() => {
     if (guestToken) {
@@ -69,6 +80,10 @@ export function ChatWidget({
             if (pending && incoming.sender_type === senderType && incoming.message === pending.text) {
               pendingOwnMessageRef.current = null;
               return prev.map((m) => (m.id === pending.tempId ? incoming : m));
+            }
+
+            if (incoming.sender_type !== senderType) {
+              onIncomingMessageRef.current?.(incoming);
             }
 
             return [...prev, incoming];
