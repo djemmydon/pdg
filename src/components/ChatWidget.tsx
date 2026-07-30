@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { ChatMessage, ChatSender } from "@/lib/types";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { cn } from "@/lib/utils";
 
 interface ChatWidgetProps {
   deliveryId: string;
@@ -16,6 +17,7 @@ interface ChatWidgetProps {
   // an authenticated Supabase session via cookies, so this is omitted.
   guestToken?: string;
   onSendMessage: (message: string) => Promise<ChatMessage>;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -29,6 +31,7 @@ export function ChatWidget({
   initialMessages,
   guestToken,
   onSendMessage,
+  onClose,
   className = "",
 }: ChatWidgetProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -36,6 +39,11 @@ export function ChatWidget({
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const supabaseClient = useMemo(() => createBrowserSupabaseClient(), []);
+  // The send button is disabled while a send is in flight, so at most one of
+  // our own messages is ever unconfirmed at a time. Tracking it lets the
+  // realtime handler recognize "this INSERT is the echo of what I just sent"
+  // instead of appending it as a second, duplicate message.
+  const pendingOwnMessageRef = useRef<{ tempId: string; text: string } | null>(null);
 
   useEffect(() => {
     if (guestToken) {
@@ -54,9 +62,17 @@ export function ChatWidget({
         },
         (payload) => {
           const incoming = payload.new as ChatMessage;
-          setMessages((prev) =>
-            prev.some((m) => m.id === incoming.id) ? prev : [...prev, incoming]
-          );
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === incoming.id)) return prev;
+
+            const pending = pendingOwnMessageRef.current;
+            if (pending && incoming.sender_type === senderType && incoming.message === pending.text) {
+              pendingOwnMessageRef.current = null;
+              return prev.map((m) => (m.id === pending.tempId ? incoming : m));
+            }
+
+            return [...prev, incoming];
+          });
         }
       )
       .subscribe();
@@ -64,7 +80,7 @@ export function ChatWidget({
     return () => {
       supabaseClient.removeChannel(channel);
     };
-  }, [deliveryId, supabaseClient, guestToken]);
+  }, [deliveryId, supabaseClient, guestToken, senderType]);
 
   // Messages can arrive out of chronological order: an optimistic send is
   // appended locally before the server confirms it, and a concurrent
@@ -97,24 +113,50 @@ export function ChatWidget({
       created_at: new Date().toISOString(),
     };
 
+    pendingOwnMessageRef.current = { tempId, text };
     setMessages((prev) => [...prev, optimisticMessage]);
     setDraft("");
     setSending(true);
     try {
       const saved = await onSendMessage(text);
+      // If the realtime echo already arrived and reconciled this message
+      // itself, pendingOwnMessageRef is already cleared and no entry in
+      // state still has tempId, so this map is a harmless no-op.
       setMessages((prev) => prev.map((m) => (m.id === tempId ? saved : m)));
+      if (pendingOwnMessageRef.current?.tempId === tempId) {
+        pendingOwnMessageRef.current = null;
+      }
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== tempId));
       setDraft(text);
+      if (pendingOwnMessageRef.current?.tempId === tempId) {
+        pendingOwnMessageRef.current = null;
+      }
     } finally {
       setSending(false);
     }
   }
 
   return (
-    <div className={`flex flex-col overflow-hidden rounded-lg border border-border bg-card ${className}`}>
-      <div className="border-b border-border px-4 py-3">
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden rounded-lg border border-border bg-card",
+        className
+      )}
+    >
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <p className="text-sm font-semibold text-foreground">Support chat</p>
+        {onClose && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            aria-label="Close support chat"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <div ref={scrollRef} className="min-h-60 flex-1 space-y-3 overflow-y-auto bg-muted/30 p-4">
