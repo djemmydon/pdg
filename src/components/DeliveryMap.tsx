@@ -6,6 +6,25 @@ import { Info, X } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const MAP_STYLE = "mapbox://styles/mapbox/streets-v12";
+
+type LineGeometry = { type: "LineString"; coordinates: [number, number][] };
+
+async function fetchDrivingRoute(
+  from: [number, number],
+  to: [number, number]
+): Promise<LineGeometry | null> {
+  try {
+    const res = await fetch(
+      `https://api.mapbox.com/directions/v5/mapbox/driving/${from[0]},${from[1]};${to[0]},${to[1]}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`
+    );
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body.routes?.[0]?.geometry ?? null;
+  } catch {
+    return null;
+  }
+}
 
 interface MapPoint {
   name: string | null;
@@ -71,7 +90,7 @@ export function DeliveryMap({ origin, destination, current, className = "" }: De
 
     const map = new mapboxgl.Map({
       container: containerRef.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: MAP_STYLE,
       center: points[0].coord,
       zoom: 10,
     });
@@ -87,6 +106,8 @@ export function DeliveryMap({ origin, destination, current, className = "" }: De
         .addTo(map);
     }
 
+    let cancelled = false;
+
     if (points.length >= 2) {
       const bounds = points.reduce(
         (b, p) => b.extend(p.coord),
@@ -94,7 +115,7 @@ export function DeliveryMap({ origin, destination, current, className = "" }: De
       );
       map.fitBounds(bounds, { padding: 60, maxZoom: 12 });
 
-      map.on("load", () => {
+      map.on("load", async () => {
         for (let i = 0; i < points.length - 1; i++) {
           const from = points[i];
           const to = points[i + 1];
@@ -102,13 +123,18 @@ export function DeliveryMap({ origin, destination, current, className = "" }: De
           // leg ending at the destination is what's left (dashed).
           const traveled = from.key === "origin" && to.key === "current";
 
+          const drivingRoute = await fetchDrivingRoute(from.coord, to.coord);
+          if (cancelled) return;
+
+          // Fall back to a straight line if Mapbox can't find a driving
+          // route between the two points (e.g. across water).
+          const geometry: LineGeometry =
+            drivingRoute ?? { type: "LineString", coordinates: [from.coord, to.coord] };
+          geometry.coordinates.forEach((coord) => bounds.extend(coord));
+
           map.addSource(`route-${i}`, {
             type: "geojson",
-            data: {
-              type: "Feature",
-              properties: {},
-              geometry: { type: "LineString", coordinates: [from.coord, to.coord] },
-            },
+            data: { type: "Feature", properties: {}, geometry },
           });
           map.addLayer({
             id: `route-line-${i}`,
@@ -117,15 +143,22 @@ export function DeliveryMap({ origin, destination, current, className = "" }: De
             layout: { "line-cap": "round", "line-join": "round" },
             paint: {
               "line-color": "#ea580c",
-              "line-width": 3,
+              "line-width": 4,
               ...(traveled ? {} : { "line-dasharray": [0.2, 1.6] }),
             },
           });
         }
+
+        if (!cancelled) {
+          map.fitBounds(bounds, { padding: 60, maxZoom: 14 });
+        }
       });
     }
 
-    return () => map.remove();
+    return () => {
+      cancelled = true;
+      map.remove();
+    };
   }, [
     hasOrigin,
     hasDestination,
