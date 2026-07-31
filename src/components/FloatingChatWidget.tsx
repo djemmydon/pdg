@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Headphones, MessageCircle, X } from "lucide-react";
+import Image from "next/image";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChatWidget } from "@/components/ChatWidget";
 import type { ChatMessage, ChatSender } from "@/lib/types";
@@ -71,8 +72,14 @@ export function FloatingChatWidget({
           }}
           className="animate-in fade-in slide-in-from-bottom-4 fixed right-4 bottom-24 z-50 flex w-[min(20rem,calc(100vw-2rem))] cursor-pointer items-start gap-3 rounded-lg border border-border bg-background p-3 text-left shadow-lg duration-150 sm:right-6"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Headphones className="h-5 w-5" />
+          <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full">
+            <Image
+              src="/support-widget-icon.jpg"
+              alt=""
+              fill
+              sizes="36px"
+              className="object-cover"
+            />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-semibold text-foreground">
@@ -107,14 +114,25 @@ export function FloatingChatWidget({
         <Button
           type="button"
           size="icon-lg"
-          className="relative h-14 w-14 rounded-full shadow-lg"
+          className="relative h-14 w-14 overflow-hidden rounded-full shadow-lg"
           onClick={() => {
             setToast(null);
             onOpenChange(!open);
           }}
           aria-label={open ? "Close support chat" : "Open support chat"}
         >
-          {open ? <X className="size-5" /> : <MessageCircle className="size-5" />}
+          {open ? (
+            <X className="size-5" />
+          ) : (
+            <Image
+              src="/support-widget-icon.jpg"
+              alt=""
+              fill
+              sizes="56px"
+              className="object-cover"
+              priority
+            />
+          )}
           {!open && needsAttention && (
             <span className="absolute top-0 right-0 flex size-3">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-destructive opacity-75" />
